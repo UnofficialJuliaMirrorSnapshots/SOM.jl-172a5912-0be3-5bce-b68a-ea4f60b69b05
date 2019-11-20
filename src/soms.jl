@@ -116,13 +116,13 @@ function makeClassFreqs(som, vis, classes)
     classNum = nrow(classLabels)
 
     cfs = DataFrame(index = 1:som.nCodes)
-    cfs[:X] = som.indices[:X]
-    cfs[:Y] = som.indices[:Y]
+    cfs[!,:X] = som.indices.X
+    cfs[!,:Y] = som.indices.Y
 
-    cfs[:Population] = zeros(Int, som.nCodes)
+    cfs.Population = zeros(Int, som.nCodes)
 
     for class in classLabels
-        cfs[Symbol(class)] = zeros(Float64, som.nCodes)
+        cfs[!,Symbol(class)] = zeros(Float64, som.nCodes)
     end
 
     # loop vis and count:
@@ -158,9 +158,9 @@ end
 
 
 """
-    function somAll(train::Array{Float64}, xdim, ydim,
-                topology, len, η, kernelFun, r,
-                norm, toroidal, rDecay, ηDecay)
+    function trainAll(om::SOM, rain::Array{Float64},
+                len, η, kernelFun, r,
+                rDecay, ηDecay)
 
 Connects the high-level-API functions with
 the backend.
@@ -174,12 +174,13 @@ function trainAll(som::Som, train::Array{Float64,2},
                 rDecay, ηDecay)
 
     # normalise training data:
-    if norm != :none
+    #
+    if som.norm != :none
         train = normTrainData(train, som.normParams)
     end
 
     # set default radius:
-    if r == 0.0
+    if r < 0.1
         if som.topol != :spherical
             r = √(som.xdim^2 + som.ydim^2) / 2
         else
@@ -234,7 +235,7 @@ function initAll( train::Array{Float64,2}, colNames::Array{String,1},
                 topology::Symbol, toroidal::Bool)
 
     # normalise training data:
-    train, normParams = normTrainData(train, norm)
+    train, normParams = normDefine(train, norm)
     codes = initCodes(nCodes, train, colNames)
 
     if topology == :rectangular

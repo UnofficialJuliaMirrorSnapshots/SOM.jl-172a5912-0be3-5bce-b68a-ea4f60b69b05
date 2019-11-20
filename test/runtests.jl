@@ -66,7 +66,7 @@ include("testFuns.jl")
 
 # test convertTrainingData:
 #
-@test testTrain(convert(Array{Float64}, train), :rectangular)
+@test testTrain(convert(Matrix{Float64}, train), :rectangular)
 
 # test kernels:
 #
@@ -85,13 +85,13 @@ include("testFuns.jl")
 #
 if MPL_INSTALLED
     @test testDensityPlot(train, :hexagonal)
-    @test testDensityPlot(train, :spherical)
+    # @test testDensityPlot(train, :spherical)
 
     @test testOtherDensityPlot(train[1:100,:], train[101:150,:])
 
     @test testClassesPlot(train, iris, :rectangular)
     @test testClassesPlot(train, iris, :hexagonal)
-    @test testClassesPlot(train, iris, :spherical)
+    # @test testClassesPlot(train, iris, :spherical)
 
     # plot to file:
     #

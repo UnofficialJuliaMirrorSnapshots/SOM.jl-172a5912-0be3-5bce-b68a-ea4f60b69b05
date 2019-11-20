@@ -3,7 +3,7 @@
 #
 
 """
-    initSOM(train, xdim, ydim = xdim;  norm = :zscore, topol = :hexagonal,
+    initSOM(train, xdim, ydim = xdim;  norm = :none, topol = :hexagonal,
             toroidal = false)
 
 Initialises a SOM.
@@ -19,7 +19,7 @@ Initialises a SOM.
 - `toroidal`: optional flag; if true, the SOM is toroidal.
 """
 function initSOM( train, xdim, ydim = xdim;
-             norm::Symbol = :none, topol = :hexagonal, toroidal = false)
+             norm = :none, topol = :hexagonal, toroidal = false)
 
     if typeof(train) == DataFrame
         colNames = [String(x) for x in names(train)]
@@ -44,7 +44,7 @@ end
 
 """
     trainSOM(som::Som, train::Any, len;
-             η = 0.2, kernelFun = gaussianKernel,
+             η = 0.2, kernelFun::Function = gaussianKernel,
              r = 0.0, rDecay = true, ηDecay = true)
 
 Train an initialised or pre-trained SOM.
@@ -109,6 +109,12 @@ function mapToSOM(som::Som, data)
         error(SOM_ERRORS[:ERR_COL_NUM])
     end
 
+    # normalise training data:
+    #
+    if som.norm != :none
+        data = normTrainData(data, som.normParams)
+    end
+
     vis = visual(som.codes, data)
     x = [som.indices[i,:X] for i in vis]
     y = [som.indices[i,:Y] for i in vis]
@@ -143,8 +149,15 @@ function classFrequencies(som::Som, data, classes)
     end
 
     x = deepcopy(data)
-    deletecols!(x, classes)
-    classes = data[classes]
+    select!(x, Not(classes))
+    classes = data[:,classes]
+
+    # normalise training data:
+    #
+    if som.norm != :none
+        x = normTrainData(x, som.normParams)
+    end
+
     vis = visual(som.codes, x)
 
     df = makeClassFreqs(som, vis, classes)
@@ -179,6 +192,10 @@ Plot the population of neurons as colours.
             by MatPlotLib; default is `:display`
 - `fileName`: name of image file. File extention overrides the setting of
               `device`.
+
+# Remark:
+3-d-plotting of spherical SOMs with MatPlotLib is experimental and
+not yet tested!
 """
 function plotDensity(som::Som; predict = nothing,
                      title = "Density of Self-Organising Map",
@@ -198,7 +215,7 @@ function plotDensity(som::Som; predict = nothing,
     if predict == nothing
         population = som.population
     else
-        population = makePopulation(som.nCodes, predict[:index])
+        population = makePopulation(som.nCodes, predict.index)
     end
 
     if typeof(colormap) == Symbol
@@ -241,6 +258,10 @@ Plot the population of neurons as colours.
             by MatPlotLib; default is `:display`
 - `fileName`: name of image file. File extention overrides the setting of
               `device`.
+
+# Remark:
+3-d-plotting of spherical SOMs with MatPlotLib is experimental and
+not yet tested!
 """
 function plotClasses(som::Som, frequencies;
                      title = "Class Frequencies of Self-Organising Map",

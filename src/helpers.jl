@@ -92,18 +92,23 @@ end
 
 
 """
-    normTrainData(train::DataFrame, normParams::DataFrame)
+    normTrainData(x, normParams)
 
 Normalise every column of training data with the params.
 
 # Arguments
-- `train`: DataFrame with training Data
+- `x`: DataFrame or Matrix with training Data
 - `normParams`: Shift and scale parameters for each attribute column.
 """
-function normTrainData(x::Array{Float64,2}, normParams)
+function normTrainData(x, normParams)
 
     for i in 1:ncol(x)
-        x[:,i] = (x[:,i] .- normParams[1,i]) ./ normParams[2,i]
+        scaled = (x[:,i] .- normParams[1,i]) ./ normParams[2,i]
+        if x isa DataFrame
+            x[!,i] = scaled
+        else
+            x[:,i] = scaled
+        end
     end
 
     return x
@@ -111,7 +116,7 @@ end
 
 
 """
-    normTrainData(train::DataFrame, norm::Symbol)
+    normDefine(train::DataFrame, norm::Symbol)
 
 Normalise every column of training data.
 
@@ -119,7 +124,7 @@ Normalise every column of training data.
 - `train`: DataFrame with training Data
 - `norm`: type of normalisation; one of `minmax, zscore, none`
 """
-function normTrainData(train::Array{Float64,2}, norm::Symbol)
+function normDefine(train::Array{Float64,2}, norm::Symbol)
 
     normParams = zeros(2, ncol(train))
 
@@ -160,7 +165,7 @@ function convertTrainingData(data)::Array{Float64,2}
         try
             train = convert(Matrix{Float64}, data)
         catch ex
-            Base.showerror(STDERR, ex, backtrace())
+            Base.showerror(stderr, ex, backtrace())
             error("Unable to convert training data to Array{Float64,2}!")
         end
     else
@@ -171,4 +176,4 @@ function convertTrainingData(data)::Array{Float64,2}
 end
 
 
-prettyPrintArray(arr) = println("$(show(IOContext(STDOUT, limit=true), "text/plain", arr))")
+prettyPrintArray(arr) = println("$(show(IOContext(stdout, limit=true), "text/plain", arr))")
